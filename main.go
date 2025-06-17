@@ -34,14 +34,14 @@ func main() {
 	if _, err := os.Stat("templates"); os.IsNotExist(err) {
 		err := os.MkdirAll("templates", 0755)
 		if err != nil {
-			log.Fatalf("Nie można utworzyć katalogu templates: %v", err)
+			log.Fatalf("Cannot create templates directory: %v", err)
 		}
 	}
 
 	if _, err := os.Stat("static"); os.IsNotExist(err) {
 		err := os.MkdirAll("static", 0755)
 		if err != nil {
-			log.Fatalf("Nie można utworzyć katalogu static: %v", err)
+			log.Fatalf("Cannot create static directory: %v", err)
 		}
 	}
 
@@ -52,37 +52,37 @@ func main() {
 			return
 		}
 
-		// Przygotowanie danych dla szablonu
+		// Prepare data for the template
 		data := struct {
 			Endpoints map[string]string
 			Year      int
 		}{
 			Endpoints: map[string]string{
-				"/request":        "Wyświetl informacje o żądaniu",
-				"/server":         "Wyświetl informacje o serwerze",
+				"/request":        "Display request information",
+				"/server":         "Display server information",
 				"/health":         "Kubernetes liveness probe",
 				"/ready":          "Kubernetes readiness probe",
-				"/toggle/ready":   "Przełącz stan gotowości",
-				"/toggle/healthy": "Przełącz stan zdrowia",
+				"/toggle/ready":   "Toggle readiness status",
+				"/toggle/healthy": "Toggle health status",
 			},
 			Year: time.Now().Year(),
 		}
 
-		// Wczytanie szablonu
+		// Load the template
 		tmplPath := filepath.Join("templates", "index.html")
 		tmpl, err := template.ParseFiles(tmplPath)
 		if err != nil {
-			log.Printf("Błąd wczytywania szablonu: %v", err)
-			http.Error(w, "Błąd wewnętrzny serwera", http.StatusInternalServerError)
+			log.Printf("Error loading template: %v", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
 
-		// Ustawienie nagłówka i renderowanie szablonu
+		// Set header and render template
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		err = tmpl.Execute(w, data)
 		if err != nil {
-			log.Printf("Błąd renderowania szablonu: %v", err)
-			http.Error(w, "Błąd wewnętrzny serwera", http.StatusInternalServerError)
+			log.Printf("Error rendering template: %v", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		}
 	})
 

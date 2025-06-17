@@ -123,6 +123,18 @@ To test the liveness probe:
 2. Navigate to `/toggle/healthy` to toggle the health status
 3. Observe in Kubernetes that the pod is restarted when not healthy
 
+## Contributing
+
+Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) to learn how you can help.
+
+## Code of Conduct
+
+This project adopts the [Contributor Covenant Code of Conduct](CODE_OF_CONDUCT.md). By participating, you are expected to uphold this code.
+
+## Security
+
+For information about reporting security issues, please see our [Security Policy](SECURITY.md).
+
 ## License
 
-MIT
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
