@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kubernetes Demo Application</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Kubernetes Demo Application</h1>
+        <p>Poniżej znajduje się lista dostępnych endpointów w aplikacji:</p>
+
+        <ul class="endpoint-list">
+            {{ range $path, $desc := .Endpoints }}
+            <li class="endpoint-item">
+                <a href="{{ $path }}" class="endpoint-link" target="_blank">{{ $path }}</a>
+                <div class="endpoint-description">{{ $desc }}</div>
+            </li>
+            {{ end }}
+        </ul>
+    </div>
+
+    <footer>
+        &copy; {{ .Year }} Kubernetes Demo Application by <a href="https://kielniakodu.com" target="_blank" rel="nofollow noopener noreferrer">Kielnia Kodu</a>
+    </footer>
+</body>
+</html>
