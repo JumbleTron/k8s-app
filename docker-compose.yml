@@ -1,0 +1,16 @@
+version: '3.9'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: ${BUILD_STAGE:-development}
+    ports:
+      - "8080:8080"
+    volumes:
+      - .:/app
+      - /app/vendor
+    environment:
+      - ENV=${ENV:-development}
+    restart: always

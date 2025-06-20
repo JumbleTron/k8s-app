@@ -10,6 +10,7 @@ import (
 	"runtime"
 	"sync/atomic"
 	"time"
+	"net"
 )
 
 type ProbeStatus struct {
@@ -17,17 +18,38 @@ type ProbeStatus struct {
 	Healthy int32 // 0 = not healthy, 1 = healthy
 }
 
+// Dodaj nowe pole "IP" do struktury ServerInfo
 type ServerInfo struct {
 	Hostname  string   `json:"hostname"`
 	OS        string   `json:"os"`
 	GoVersion string   `json:"go_version"`
 	CPUs      int      `json:"cpus"`
 	Env       []string `json:"env"`
+	IP        string   `json:"ip"`
 }
 
 var probeStatus = ProbeStatus{
 	Ready:   1,
 	Healthy: 1,
+}
+
+// Funkcja pomocnicza do uzyskania adresu IP
+func getServerIP() string {
+	addrs, err := net.InterfaceAddrs()
+	if err != nil {
+		log.Printf("Error fetching IP addresses: %v", err)
+		return "unknown"
+	}
+
+	for _, addr := range addrs {
+		// Sprawdź, czy jest to adres IP (IPv4) i czy nie jest to adres lokalny
+		if ipNet, ok := addr.(*net.IPNet); ok && !ipNet.IP.IsLoopback() {
+			if ipNet.IP.To4() != nil {
+				return ipNet.IP.String()
+			}
+		}
+	}
+	return "unknown"
 }
 
 func main() {
@@ -52,23 +74,39 @@ func main() {
 			return
 		}
 
-		// Prepare data for the template
+		// Pobierz hostname
+		hostname, err := os.Hostname()
+		if err != nil {
+			hostname = "unknown"
+		}
+
+		// Uzupełnianie danych ServerInfo, łącznie z IP
+		serverInfo := ServerInfo{
+			Hostname:  hostname,
+			OS:        runtime.GOOS,
+			GoVersion: runtime.Version(),
+			CPUs:      runtime.NumCPU(),
+			Env:       os.Environ(),
+			IP:        getServerIP(),
+		}
+
+		// Przygotowanie danych dla szablonu
 		data := struct {
-			Endpoints map[string]string
-			Year      int
+			Endpoints  map[string]string
+			Year       int
+			ServerInfo ServerInfo
 		}{
 			Endpoints: map[string]string{
-				"/request":        "Display request information",
-				"/server":         "Display server information",
 				"/health":         "Kubernetes liveness probe",
 				"/ready":          "Kubernetes readiness probe",
 				"/toggle/ready":   "Toggle readiness status",
 				"/toggle/healthy": "Toggle health status",
 			},
-			Year: time.Now().Year(),
+			Year:       time.Now().Year(),
+			ServerInfo: serverInfo,
 		}
 
-		// Load the template
+		// Wczytaj szablon
 		tmplPath := filepath.Join("templates", "index.html")
 		tmpl, err := template.ParseFiles(tmplPath)
 		if err != nil {
@@ -77,53 +115,13 @@ func main() {
 			return
 		}
 
-		// Set header and render template
+		// Renderuj dane w szablonie
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		err = tmpl.Execute(w, data)
 		if err != nil {
 			log.Printf("Error rendering template: %v", err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		}
-	})
-
-	// Request info handler
-	http.HandleFunc("/request", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-
-		headers := make(map[string][]string)
-		for name, values := range r.Header {
-			headers[name] = values
-		}
-
-		requestInfo := map[string]interface{}{
-			"method": r.Method,
-			"url": r.URL.String(),
-			"protocol": r.Proto,
-			"host": r.Host,
-			"remote_address": r.RemoteAddr,
-			"headers": headers,
-		}
-
-		json.NewEncoder(w).Encode(requestInfo)
-	})
-
-	// Server info handler
-	http.HandleFunc("/server", func(w http.ResponseWriter, r *http.Request) {
-		hostname, err := os.Hostname()
-		if err != nil {
-			hostname = "unknown"
-		}
-
-		info := ServerInfo{
-			Hostname:  hostname,
-			OS:        runtime.GOOS,
-			GoVersion: runtime.Version(),
-			CPUs:      runtime.NumCPU(),
-			Env:       os.Environ(),
-		}
-
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(info)
 	})
 
 	// Kubernetes liveness probe

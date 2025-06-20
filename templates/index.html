@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pl">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,7 +9,21 @@
 <body>
     <div class="container">
         <h1>Kubernetes Demo Application</h1>
-        <p>Poniżej znajduje się lista dostępnych endpointów w aplikacji:</p>
+        <h2>Server Information</h2>
+        <ul>
+            <li><strong>Hostname:</strong> {{ .ServerInfo.Hostname }}</li>
+            <li><strong>IP Address:</strong> {{ .ServerInfo.IP }}</li>
+            <li><strong>Operating System:</strong> {{ .ServerInfo.OS }}</li>
+            <li><strong>Go Version:</strong> {{ .ServerInfo.GoVersion }}</li>
+            <li><strong>CPU Count:</strong> {{ .ServerInfo.CPUs }}</li>
+            <li><strong>Environment Variables:</strong></li>
+            <ul>
+                {{ range .ServerInfo.Env }}
+                <li>{{ . }}</li>
+                {{ end }}
+            </ul>
+        </ul>
+        <p>Below is a list of available endpoints in the application:</p>
 
         <ul class="endpoint-list">
             {{ range $path, $desc := .Endpoints }}
